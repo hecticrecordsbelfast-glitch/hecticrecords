@@ -8,6 +8,15 @@
 
 const { getStore } = require("@netlify/blobs");
 
+function getProductsStore() {
+  const token = process.env.NETLIFY_BLOBS_TOKEN;
+  const siteID = process.env.SITE_ID || process.env.NETLIFY_SITE_ID;
+  if (token && siteID) {
+    return getStore({ name: "hectic-store", siteID, token });
+  }
+  return getStore("hectic-store");
+}
+
 exports.handler = async (event) => {
   const headers = {
     "Access-Control-Allow-Origin": "*",
@@ -65,7 +74,7 @@ exports.handler = async (event) => {
   };
 
   try {
-    const store = getStore("hectic-store");
+    const store = getProductsStore();
     await store.setJSON("products", dataToSave);
   } catch (err) {
     return { statusCode: 500, headers, body: JSON.stringify({ error: "Could not save to storage: " + err.message }) };
