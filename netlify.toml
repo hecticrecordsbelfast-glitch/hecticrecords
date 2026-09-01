@@ -1,0 +1,18 @@
+[build]
+  functions = "netlify/functions"
+  publish = "."
+
+[[redirects]]
+  from = "/api/create-checkout"
+  to = "/.netlify/functions/create-checkout"
+  status = 200
+
+[[redirects]]
+  from = "/api/products"
+  to = "/.netlify/functions/products-get"
+  status = 200
+
+[[redirects]]
+  from = "/api/products/save"
+  to = "/.netlify/functions/products-save"
+  status = 200

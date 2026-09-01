@@ -1,0 +1,35 @@
+{
+  "genres": {
+    "rock": "Rock",
+    "punk": "Punk",
+    "indie": "Indie",
+    "jazz": "Jazz",
+    "soul": "Funk & Soul",
+    "disco": "Disco",
+    "folk": "Folk & Trad",
+    "hip-hop": "Hip-Hop",
+    "metal": "Metal & Hardcore"
+  },
+  "products": [
+    { "id": "p01", "artist": "Nightbus Static", "title": "Rosemary Street", "price": 24.99, "genre": "indie", "tags": ["new-in"], "format": "LP", "accent": 1 },
+    { "id": "p02", "artist": "The Low Reels", "title": "Late Shift", "price": 27.5, "genre": "rock", "tags": ["new-in"], "format": "LP", "accent": 2 },
+    { "id": "p03", "artist": "Bonewax", "title": "Splinter Hymns", "price": 22.0, "genre": "punk", "tags": ["new-in"], "format": "7\"", "accent": 3 },
+    { "id": "p04", "artist": "Ceallach", "title": "Copper & Rain", "price": 26.0, "genre": "folk", "tags": [], "format": "LP", "accent": 4 },
+    { "id": "p05", "artist": "Marsh King", "title": "Undertow", "price": 29.99, "genre": "jazz", "tags": ["new-in"], "format": "LP", "accent": 5 },
+    { "id": "p06", "artist": "Vantablk", "title": "Concrete Heart", "price": 25.0, "genre": "metal", "tags": [], "format": "LP", "accent": 1 },
+    { "id": "p07", "artist": "Gloria Dunne", "title": "Slow Gold", "price": 23.5, "genre": "soul", "tags": ["new-in"], "format": "LP", "accent": 2 },
+    { "id": "p08", "artist": "Echo Parade", "title": "Neon Dig", "price": 24.0, "genre": "disco", "tags": [], "format": "LP", "accent": 3 },
+    { "id": "p09", "artist": "Radio Static Choir", "title": "Belfast Nights", "price": 32.0, "genre": "rock", "tags": ["pre-order"], "format": "2LP", "accent": 4, "releaseDate": "2026-11-14" },
+    { "id": "p10", "artist": "Kilbroney", "title": "Long Acre", "price": 28.0, "genre": "folk", "tags": ["pre-order"], "format": "LP", "accent": 5, "releaseDate": "2026-10-24" },
+    { "id": "p11", "artist": "DJ Fathom", "title": "Deep End", "price": 21.5, "genre": "hip-hop", "tags": ["pre-order", "new-in"], "format": "LP", "accent": 1, "releaseDate": "2026-09-19" },
+    { "id": "p12", "artist": "The Outer Docks", "title": "Salt Line", "price": 26.5, "genre": "punk", "tags": ["pre-order"], "format": "LP", "accent": 2, "releaseDate": "2026-12-05" },
+    { "id": "p13", "artist": "Marram", "title": "Dune Songs", "price": 24.99, "genre": "indie", "tags": [], "format": "LP", "accent": 3 },
+    { "id": "p14", "artist": "Rí na gCat", "title": "Nine Lives", "price": 25.5, "genre": "folk", "tags": [], "format": "LP", "accent": 4 },
+    { "id": "p15", "artist": "Static Loom", "title": "Woven Room", "price": 27.0, "genre": "jazz", "tags": [], "format": "LP", "accent": 5 },
+    { "id": "p16", "artist": "Half Light", "title": "Reissue: Streetlamp Sessions", "price": 30.0, "genre": "soul", "tags": [], "format": "LP", "accent": 1 },
+    { "id": "p17", "artist": "Craic House", "title": "Session Vol. 2", "price": 22.99, "genre": "folk", "tags": [], "format": "LP", "accent": 2 },
+    { "id": "p18", "artist": "Fume Belt", "title": "Idle Engines", "price": 23.0, "genre": "metal", "tags": [], "format": "LP", "accent": 3 },
+    { "id": "p19", "artist": "Various Artists", "title": "Belfast Underground '84–'89", "price": 34.0, "genre": "punk", "tags": [], "format": "2LP", "accent": 4 },
+    { "id": "p20", "artist": "Lantern Row", "title": "First Light", "price": 24.5, "genre": "indie", "tags": ["new-in"], "format": "LP", "accent": 5 }
+  ]
+}
