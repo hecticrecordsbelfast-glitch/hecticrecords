@@ -4,7 +4,7 @@
    Replace with your real inventory — see README for the format.
    ------------------------------------------------------------------ */
 
-const PRODUCTS = [
+var PRODUCTS = [
   { id: "p01", artist: "Nightbus Static", title: "Rosemary Street", price: 24.99, genre: "indie", tags: ["new-in"], format: "LP", accent: 1 },
   { id: "p02", artist: "The Low Reels", title: "Late Shift", price: 27.5, genre: "rock", tags: ["new-in"], format: "LP", accent: 2 },
   { id: "p03", artist: "Bonewax", title: "Splinter Hymns", price: 22.0, genre: "punk", tags: ["new-in"], format: "7\"", accent: 3 },
@@ -27,7 +27,7 @@ const PRODUCTS = [
   { id: "p20", artist: "Lantern Row", title: "First Light", price: 24.5, genre: "indie", tags: ["new-in"], format: "LP", accent: 5 }
 ];
 
-const GENRE_LABELS = {
+var GENRE_LABELS = {
   "rock": "Rock",
   "punk": "Punk",
   "indie": "Indie",
