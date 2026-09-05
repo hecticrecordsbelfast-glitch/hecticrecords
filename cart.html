@@ -167,19 +167,25 @@
         renderCartPage();
       });
     });
-    document.getElementById("square-checkout-btn").addEventListener("click", async () => {
+       document.getElementById("square-checkout-btn").addEventListener("click", async () => {
       const btn = document.getElementById("square-checkout-btn");
       const errorEl = document.getElementById("checkout-error");
       errorEl.style.display = "none";
       btn.textContent = "Redirecting to Square...";
       btn.disabled = true;
 
-      const items = ids.map((id) => {
-        const p = findProduct(id);
-        return { artist: p.artist, title: p.title, price: p.price, quantity: cart[id] };
-      });
-
       try {
+        const missingIds = ids.filter((id) => !findProduct(id));
+        if (missingIds.length > 0) {
+          missingIds.forEach((id) => removeFromCart(id));
+          throw new Error("One or more items in your bag were out of date and have been removed. Please check your bag and try again.");
+        }
+
+        const items = ids.map((id) => {
+          const p = findProduct(id);
+          return { id: p.id, artist: p.artist, title: p.title, price: p.price, quantity: cart[id] };
+        });
+
         const res = await fetch("/api/create-checkout", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
