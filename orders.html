@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Orders — Hectic Records Staff</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="images/logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<style>
+  .admin-bar { background: var(--ink); color: var(--paper); padding: 14px 24px; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+  .admin-bar a { text-decoration: underline; font-size: 0.85rem; margin-left: 16px; }
+  .admin-wrap { max-width: 1100px; margin: 0 auto; padding: 40px 24px 80px; }
+
+  .lock-screen { max-width: 380px; margin: 90px auto; text-align: center; border: 2px solid var(--ink); border-radius: 10px; padding: 40px 30px; }
+  .lock-screen input { width: 100%; padding: 12px 14px; border: 2px solid var(--ink); border-radius: 6px; font-family: inherit; margin: 16px 0; font-size: 1rem; }
+  .lock-screen p.error { color: var(--rust); font-size: 0.85rem; }
+
+  .orders-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+  .filter-chip { border: 2px solid var(--ink); background: var(--white); border-radius: 999px; padding: 7px 16px; font-weight: 700; font-size: 0.82rem; cursor: pointer; }
+  .filter-chip.is-active { background: var(--ink); color: var(--paper); }
+
+  .order-card { border: 2px solid var(--ink); border-radius: 10px; padding: 20px 22px; margin-bottom: 18px; background: var(--white); }
+  .order-card__top { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; margin-bottom: 14px; }
+  .order-card__date { font-size: 0.78rem; opacity: 0.65; }
+  .order-card__total { font-family: var(--font-display); font-size: 1.4rem; font-weight: 900; }
+  .order-status { font-size: 0.72rem; font-weight: 700; padding: 4px 10px; border-radius: 999px; text-transform: uppercase; letter-spacing: 0.03em; }
+  .order-status--pending { background: var(--gold); color: var(--ink); }
+  .order-status--fulfilled { background: #4a7a4a; color: #fff; }
+
+  .order-card__grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 14px; }
+  @media (max-width: 700px) { .order-card__grid { grid-template-columns: 1fr; } }
+  .order-card__grid h4 { margin: 0 0 6px; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.03em; opacity: 0.6; }
+  .order-card__grid p { margin: 0; font-size: 0.9rem; }
+  .order-items { list-style: none; padding: 0; margin: 0 0 14px; border-top: 1px solid var(--paper-line); padding-top: 10px; }
+  .order-items li { display: flex; justify-content: space-between; font-size: 0.88rem; padding: 4px 0; }
+  .order-items li span:last-child { opacity: 0.7; }
+
+  .empty-note { opacity: 0.65; font-style: italic; text-align: center; padding: 60px 0; }
+</style>
+</head>
+<body>
+
+<div id="lock-screen" class="lock-screen">
+  <h1 style="font-size:1.6rem;">Staff Login</h1>
+  <p>Enter the staff password to view orders.</p>
+  <input type="password" id="password-input" placeholder="Password" autocomplete="current-password">
+  <button class="btn btn--rust btn--full" id="unlock-btn">Log In</button>
+  <p class="error" id="lock-error" style="display:none;"></p>
+</div>
+
+<div id="orders-app" style="display:none;">
+  <div class="admin-bar">
+    <div><strong>Hectic Records — Orders</strong><a href="admin.html">Stock</a><a href="index.html">Back to site</a></div>
+  </div>
+
+  <div class="admin-wrap">
+    <div class="orders-toolbar">
+      <h2 style="margin:0;">Orders (<span id="order-count">0</span>)</h2>
+      <div style="display:flex; gap:8px;">
+        <button class="filter-chip is-active" data-filter="all">All</button>
+        <button class="filter-chip" data-filter="pending">Pending</button>
+        <button class="filter-chip" data-filter="fulfilled">Fulfilled</button>
+      </div>
+    </div>
+
+    <div id="orders-list"></div>
+  </div>
+</div>
+
+<script>
+  const PASSWORD_SESSION_KEY = "hectic_admin_pw";
+  let orders = [];
+  let activeFilter = "all";
+
+  function money(n) {
+    return n === null || n === undefined ? "—" : "£" + Number(n).toFixed(2);
+  }
+
+  function formatDate(iso) {
+    try {
+      return new Date(iso).toLocaleString("en-GB", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
+    } catch (e) {
+      return iso;
+    }
+  }
+
+  function addressHTML(order) {
+    if (!order.shippingAddress) return "<p>No shipping address given (in-store collection, or not requested).</p>";
+    const a = order.shippingAddress;
+    return `<p>${[a.line1, a.line2, a.city, a.postcode, a.country].filter(Boolean).join("<br>")}</p>`;
+  }
+
+  function orderCardHTML(order) {
+    const isPickup = (order.fulfilmentNote || "").startsWith("Collect");
+    const statusClass = order.fulfilled ? "order-status--fulfilled" : "order-status--pending";
+    const statusLabel = order.fulfilled
+      ? (isPickup ? "Collected" : "Shipped")
+      : (isPickup ? "Ready for collection" : "Needs shipping");
+    const toggleLabel = isPickup ? "Mark as collected" : "Mark as shipped";
+    return `
+      <div class="order-card" data-order-id="${order.orderId}">
+        <div class="order-card__top">
+          <div>
+            <span class="order-status ${statusClass}">${statusLabel}</span>
+            <p class="order-card__date">${formatDate(order.date)} · ${order.fulfilmentNote || "—"}</p>
+          </div>
+          <div class="order-card__total">${money(order.totalMoney)}</div>
+        </div>
+
+        <div class="order-card__grid">
+          <div>
+            <h4>Buyer</h4>
+            <p>${order.recipientName || "Name not given"}</p>
+            <p>${order.buyerEmail || "No email on file"}</p>
+            <p>${order.recipientPhone || ""}</p>
+          </div>
+          <div>
+            <h4>Shipping address</h4>
+            ${addressHTML(order)}
+          </div>
+        </div>
+
+        <ul class="order-items">
+          ${order.items.map((item) => `<li><span>${item.quantity} × ${item.name}</span><span>${money(item.price)}</span></li>`).join("")}
+        </ul>
+
+        <label style="display:flex; align-items:center; gap:8px; font-size:0.88rem; cursor:pointer;">
+          <input type="checkbox" data-fulfilled-toggle ${order.fulfilled ? "checked" : ""}>
+          ${toggleLabel}
+        </label>
+        ${order.stockUpdateError ? `<p style="color:var(--rust); font-size:0.8rem; margin-top:10px;">Note: stock count may not have updated automatically for this order (${order.stockUpdateError}). Worth double-checking stock levels in the Stock page.</p>` : ""}
+      </div>
+    `;
+  }
+
+  function render() {
+    const list = document.getElementById("orders-list");
+    const filtered = orders.filter((o) => {
+      if (activeFilter === "pending") return !o.fulfilled;
+      if (activeFilter === "fulfilled") return o.fulfilled;
+      return true;
+    });
+    document.getElementById("order-count").textContent = orders.length;
+
+    if (filtered.length === 0) {
+      list.innerHTML = `<p class="empty-note">No orders here yet.</p>`;
+      return;
+    }
+    list.innerHTML = filtered.map(orderCardHTML).join("");
+
+    list.querySelectorAll("[data-fulfilled-toggle]").forEach((checkbox) => {
+      checkbox.addEventListener("change", async () => {
+        const card = checkbox.closest("[data-order-id]");
+        const orderId = card.getAttribute("data-order-id");
+        const password = sessionStorage.getItem(PASSWORD_SESSION_KEY);
+        checkbox.disabled = true;
+        try {
+          const res = await fetch("/api/orders/update", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "X-Admin-Password": password || "" },
+            body: JSON.stringify({ orderId, fulfilled: checkbox.checked }),
+          });
+          if (!res.ok) throw new Error("Save failed");
+          const order = orders.find((o) => o.orderId === orderId);
+          if (order) order.fulfilled = checkbox.checked;
+          render();
+        } catch (err) {
+          checkbox.checked = !checkbox.checked;
+          alert("Couldn't update that order — try again.");
+        } finally {
+          checkbox.disabled = false;
+        }
+      });
+    });
+  }
+
+  document.querySelectorAll("[data-filter]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      activeFilter = btn.getAttribute("data-filter");
+      document.querySelectorAll("[data-filter]").forEach((b) => b.classList.remove("is-active"));
+      btn.classList.add("is-active");
+      render();
+    });
+  });
+
+  async function loadOrders(password) {
+    const res = await fetch("/api/orders", {
+      headers: { "X-Admin-Password": password || "" },
+    });
+    if (res.status === 401) throw new Error("wrong-password");
+    if (!res.ok) throw new Error("load-failed");
+    const data = await res.json();
+    orders = data.orders || [];
+  }
+
+  function showLockScreen() {
+    document.getElementById("lock-screen").style.display = "block";
+    document.getElementById("orders-app").style.display = "none";
+  }
+
+  async function unlockAndInit(password) {
+    try {
+      await loadOrders(password);
+    } catch (err) {
+      if (err.message === "wrong-password") {
+        document.getElementById("lock-error").textContent = "Wrong password.";
+        document.getElementById("lock-error").style.display = "block";
+        sessionStorage.removeItem(PASSWORD_SESSION_KEY);
+        return;
+      }
+      document.getElementById("lock-error").textContent = "Couldn't load orders — try again.";
+      document.getElementById("lock-error").style.display = "block";
+      return;
+    }
+    sessionStorage.setItem(PASSWORD_SESSION_KEY, password);
+    document.getElementById("lock-screen").style.display = "none";
+    document.getElementById("orders-app").style.display = "block";
+    render();
+  }
+
+  document.getElementById("unlock-btn").addEventListener("click", () => {
+    const pw = document.getElementById("password-input").value;
+    if (!pw) return;
+    unlockAndInit(pw);
+  });
+  document.getElementById("password-input").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") document.getElementById("unlock-btn").click();
+  });
+
+  const existingPassword = sessionStorage.getItem(PASSWORD_SESSION_KEY);
+  if (existingPassword) {
+    unlockAndInit(existingPassword);
+  }
+</script>
+</body>
+</html>
