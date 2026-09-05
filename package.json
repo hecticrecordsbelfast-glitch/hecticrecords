@@ -1,8 +1,0 @@
-{
-  "name": "hectic-records-website",
-  "private": true,
-  "description": "Hectic Records Belfast — static site with Netlify Functions for Square checkout and stock admin.",
-  "dependencies": {
-    "@netlify/blobs": "^8.1.0"
-  }
-}
