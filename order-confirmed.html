@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Order Confirmed — Hectic Records</title>
+<link rel="icon" href="images/logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="site-header__inner">
+    <a href="index.html" class="site-header__logo">
+      <img src="images/logo.png" alt="Hectic Records">
+    </a>
+  </div>
+</header>
+
+<section class="section">
+  <div class="cart-empty">
+    <h1>Thanks — your order's in!</h1>
+    <p>We'll get your records ready. You'll hear from us by email or phone to confirm collection or delivery.</p>
+    <a href="shop.html" class="btn btn--rust">Keep browsing</a>
+  </div>
+</section>
+
+<footer class="site-footer">
+  <div class="site-footer__bottom">&copy; 2026 Hectic Records.</div>
+</footer>
+
+<script src="js/main.js"></script>
+<script>
+  // Order's paid via Square at this point, so clear the local cart.
+  localStorage.removeItem("hectic_cart_v1");
+</script>
+</body>
+</html>
