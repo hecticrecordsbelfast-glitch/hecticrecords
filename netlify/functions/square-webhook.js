@@ -13,10 +13,14 @@
    Needs: SQUARE_ACCESS_TOKEN, SQUARE_ENVIRONMENT,
    SQUARE_WEBHOOK_SIGNATURE_KEY, and (if your site needs it)
    NETLIFY_BLOBS_TOKEN — see README.
+
+   Also sends an order notification email (see README for full setup):
+   GMAIL_USER, GMAIL_APP_PASSWORD, ORDER_NOTIFICATION_EMAIL.
    ------------------------------------------------------------------ */
 
 const crypto = require("crypto");
 const { getStore } = require("@netlify/blobs");
+const nodemailer = require("nodemailer");
 
 function getStoreFor(name) {
   const token = process.env.NETLIFY_BLOBS_TOKEN;
@@ -25,6 +29,76 @@ function getStoreFor(name) {
     return getStore({ name, siteID, token });
   }
   return getStore(name);
+}
+
+function money(n) {
+  return n === null || n === undefined ? "—" : "£" + Number(n).toFixed(2);
+}
+
+// Sends a plain-text order notification email from the shop's own Gmail
+// account. Needs GMAIL_USER and GMAIL_APP_PASSWORD (a Google "App
+// Password", not the normal account password — see README) and
+// ORDER_NOTIFICATION_EMAIL (who receives the notification).
+// Failing to send an email never stops the order itself from being
+// recorded — this is a best-effort side effect, logged but not fatal.
+async function sendOrderNotificationEmail(orderRecord) {
+  const GMAIL_USER = process.env.GMAIL_USER;
+  const GMAIL_APP_PASSWORD = process.env.GMAIL_APP_PASSWORD;
+  const NOTIFY_TO = process.env.ORDER_NOTIFICATION_EMAIL;
+
+  if (!GMAIL_USER || !GMAIL_APP_PASSWORD || !NOTIFY_TO) {
+    return { sent: false, reason: "Email notifications aren't configured (missing GMAIL_USER, GMAIL_APP_PASSWORD, or ORDER_NOTIFICATION_EMAIL)." };
+  }
+
+  const transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: { user: GMAIL_USER, pass: GMAIL_APP_PASSWORD },
+  });
+
+  const itemLines = orderRecord.items
+    .map((item) => `  ${item.quantity} x ${item.name} — ${money(item.price)} each`)
+    .join("\n");
+
+  const addressLines = orderRecord.shippingAddress
+    ? [
+        orderRecord.shippingAddress.line1,
+        orderRecord.shippingAddress.line2,
+        orderRecord.shippingAddress.city,
+        orderRecord.shippingAddress.postcode,
+        orderRecord.shippingAddress.country,
+      ].filter(Boolean).join("\n  ")
+    : "No shipping address given (in-store collection, or not requested).";
+
+  const bodyText = `New order on Hectic Records — ${money(orderRecord.totalMoney)}
+
+Fulfilment: ${orderRecord.fulfilmentNote || "—"}
+
+Items:
+${itemLines}
+
+Buyer:
+  Name: ${orderRecord.recipientName || "Not given"}
+  Email: ${orderRecord.buyerEmail || "Not given"}
+  Phone: ${orderRecord.recipientPhone || "Not given"}
+
+Shipping address:
+  ${addressLines}
+
+Order ID: ${orderRecord.orderId}
+View full details in the staff orders page: /orders.html
+`;
+
+  try {
+    await transporter.sendMail({
+      from: `"Hectic Records" <${GMAIL_USER}>`,
+      to: NOTIFY_TO,
+      subject: `New order — ${money(orderRecord.totalMoney)}`,
+      text: bodyText,
+    });
+    return { sent: true };
+  } catch (err) {
+    return { sent: false, reason: err.message };
+  }
 }
 
 function verifySignature(notificationUrl, body, signatureHeader, signatureKey) {
@@ -178,5 +252,9 @@ exports.handler = async (event) => {
     // non-fatal
   }
 
-  return { statusCode: 200, body: "OK" };
+  // Best-effort — a failed notification email should never make Square
+  // think the webhook itself failed (which would cause pointless retries).
+  const emailResult = await sendOrderNotificationEmail(orderRecord).catch((err) => ({ sent: false, reason: err.message }));
+
+  return { statusCode: 200, body: emailResult.sent ? "OK" : `OK (email not sent: ${emailResult.reason})` };
 };
