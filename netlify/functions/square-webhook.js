@@ -16,6 +16,10 @@
 
    Also sends an order notification email (see README for full setup):
    GMAIL_USER, GMAIL_APP_PASSWORD, ORDER_NOTIFICATION_EMAIL.
+
+   IMPORTANT: this webhook receives events for every sale on your whole
+   Square account (your till, any other shops), not just this site —
+   it filters to only act on sales matching SQUARE_LOCATION_ID.
    ------------------------------------------------------------------ */
 
 const crypto = require("crypto");
@@ -146,7 +150,16 @@ exports.handler = async (event) => {
   }
 
   if (payload.type !== "payment.updated" || payload.data?.object?.payment?.status !== "COMPLETED") {
-    return { statusCode: 200, body: "Ignored (not a completed payment)" };// This webhook fires for every sale across your whole Square account — // your till, any other shops, all of it — not just this website. Only // act on sales that belong to this site's own configured location. const OWN_LOCATION_ID = process.env.SQUARE_LOCATION_ID; const paymentLocationId = payload.data.object.payment.location_id; if (OWN_LOCATION_ID && paymentLocationId && paymentLocationId !== OWN_LOCATION_ID) { return { statusCode: 200, body: "Ignored (different location)" }; }
+    return { statusCode: 200, body: "Ignored (not a completed payment)" };
+  }
+
+  // This webhook fires for every sale across your whole Square account —
+  // your till, any other shops, all of it — not just this website. Only
+  // act on sales that belong to this site's own configured location.
+  const OWN_LOCATION_ID = process.env.SQUARE_LOCATION_ID;
+  const paymentLocationId = payload.data.object.payment.location_id;
+  if (OWN_LOCATION_ID && paymentLocationId && paymentLocationId !== OWN_LOCATION_ID) {
+    return { statusCode: 200, body: "Ignored (different location)" };
   }
 
   const payment = payload.data.object.payment;
